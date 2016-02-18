@@ -84,9 +84,6 @@ function render(refName, start, end) {
     renderReads(refName, start, end);
     renderCoverage(refName, start, end);
   }
-
-
-
 }
 
 function renderFeatures(viewRefName, viewRegStart, viewRegEnd) {

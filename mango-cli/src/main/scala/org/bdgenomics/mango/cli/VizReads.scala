@@ -31,6 +31,7 @@ import org.bdgenomics.adam.models.VariantContext
 import org.apache.parquet.filter2.predicate.FilterPredicate
 import org.apache.parquet.filter2.dsl.Dsl._
 import org.apache.spark.rdd.RDD
+import org.bdgenomics.mango.filters.AlignmentRecordFilter
 import org.bdgenomics.utils.cli._
 import org.bdgenomics.adam.models.ReferenceRegion
 import org.bdgenomics.adam.models.ReferencePosition
@@ -55,6 +56,7 @@ object VizTimers extends Metrics {
   val VarRequest = timer("GET variants")
   val FeatRequest = timer("GET features")
   val RefRequest = timer("GET reference")
+  val AlignmentRequest = timer("GET alignment")
 
   //RDD operations
   var LoadParquetFile = timer("Loading from Parquet")
@@ -220,14 +222,18 @@ class VizServlet extends ScalatraServlet {
   }
 
   get("/reads/:ref") {
-    VizTimers.ReadsRequest.time {
+    VizTimers.AlignmentRequest.time {
       contentType = "json"
       viewRegion = new ReferenceRegion(params("ref").toString, params("start").toLong, params("end").toLong)
       val region = new ReferenceRegion(params("ref").toString, params("start").toLong, params("end").toLong)
+      val quality =  params("quality")
+      var qualityFilter = 0.0
+      if (!quality.isEmpty) qualityFilter = quality.toDouble
       val sampleIds: List[String] = params("sample").split(",").toList
       val data: RDD[(ReferenceRegion, AlignmentRecord)] = VizReads.readsData.multiget(viewRegion, sampleIds).toRDD
+      val filteredData = AlignmentRecordFilter.filterByRegion(data, qualityFilter)
       val reference = VizReads.getReference(viewRegion)
-      val alignmentData = AlignmentRecordLayout(data, reference, region, sampleIds)
+      val alignmentData = AlignmentRecordLayout(filteredData, reference, viewRegion, sampleIds)
 
       val fileMap = VizReads.readsData.getFileMap()
       var retJson = ""
@@ -326,6 +332,7 @@ class VizServlet extends ScalatraServlet {
     }
   }
 
+
   get("/features/:ref") {
     VizTimers.FeatRequest.time {
       val region = ReferenceRegion(params("ref"), params("start").toLong, params("end").toLong)
@@ -351,8 +358,10 @@ class VizServlet extends ScalatraServlet {
   }
 
   get("/reference/:ref") {
-    viewRegion = ReferenceRegion(params("ref"), params("start").toLong, params("end").toLong)
-    write(VizReads.printReferenceJson(viewRegion))
+    VizTimers.RefRequest.time {
+      viewRegion = ReferenceRegion(params("ref"), params("start").toLong, params("end").toLong)
+      write(VizReads.printReferenceJson(viewRegion))
+    }
   }
 }
 

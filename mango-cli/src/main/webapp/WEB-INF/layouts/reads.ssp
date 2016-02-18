@@ -105,7 +105,7 @@
         </li>
         <li>
             <form name="regForm" method="GET" class="form-inline">
-                region:
+                Region:
                 <input type="text" name="info" size="20" class="form-control" placeholder="refName:start-end">
                 <input name="Submit button"
                       type="button"
@@ -114,6 +114,18 @@
                       class="btn btn-danger btn-xs"/>
             </form>
         </li>
+        <li>
+            <form name="qualityForm" method="GET" class="form-inline">
+            Quality:
+                <input type="text" name="quality" size="20" class="form-control" placeholder="refName:start-end">
+                <input name="Submit button"
+                    type="button"
+                    value="Submit"
+                    onclick="checkQuality(this.form)"
+                    class="btn btn-danger btn-xs"/>
+            </form>
+        </li>
+
         <label class = "checkbox-inline"><input type="checkbox" id="indelCheck"> Show Indels</label>
         <label class = "checkbox-inline"><input type="checkbox" id="mismatchCheck"> Show Mismatching Bases</label>
     </ul>

@@ -17,14 +17,20 @@
  */
 package org.bdgenomics.mango.filters
 
+import org.apache.spark.rdd.RDD
+import org.bdgenomics.adam.models.ReferenceRegion
+import org.bdgenomics.formats.avro.{AlignmentRecord}
+
 object AlignmentRecordFilter {
 
-  def filterByRegion() = {
-
+  //Applies quality filter to alignment records, returns in JSON format
+  def filterByRegion(data: RDD[(ReferenceRegion, AlignmentRecord)], quality:Double): RDD[(ReferenceRegion, AlignmentRecord)] = {
+    if (quality <= 0.0) return data
+    return data.filter(r => r._2.getMapq()>=quality)
   }
 
+  //
   def aggregate() = {
 
   }
-
 }
