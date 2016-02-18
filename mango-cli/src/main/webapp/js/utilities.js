@@ -144,7 +144,7 @@ function checkQuality(form) {
   var info = form.info.value;
   var refName = info.split(":")[0];
   var region = info.split(":")[1].split("-");
-  var newStart = Math.max(0, region[0]);
+  var newStart = Math.max(0, region[3]);
   var newEnd = Math.max(newStart, region[1]);
   render(refName, newStart, newEnd);
 }

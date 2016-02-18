@@ -216,7 +216,7 @@ class VizServlet extends ScalatraServlet {
       viewRegion = new ReferenceRegion(params("ref").toString, params("start").toLong, params("end").toLong)
       val end: Long = Math.min(viewRegion.end, VizReads.readsData.dict(viewRegion.referenceName).get.length)
       val region = new ReferenceRegion(params("ref").toString, params("start").toLong, end)
-      val quality =  params("quality")
+      val quality = params("quality")
       var qualityFilter = 0.0
       if (!quality.isEmpty) qualityFilter = quality.toDouble
       val sampleIds: List[String] = params("sample").split(",").toList
@@ -337,7 +337,6 @@ class VizServlet extends ScalatraServlet {
       templateEngine.layout("mango-cli/src/main/webapp/WEB-INF/layouts/nofeatures.ssp")
     }
   }
-
 
   get("/features/:ref") {
     viewRegion = ReferenceRegion(params("ref"), params("start").toLong, params("end").toLong)
