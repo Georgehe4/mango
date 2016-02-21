@@ -235,15 +235,13 @@ class VizServlet extends ScalatraServlet {
           val region = new ReferenceRegion(params("ref").toString, params("start").toLong, end)
           val sampleIds: List[String] = params("sample").split(",").toList
           val reference = VizReads.getReference(region)
-          val quality = params("quality")
-          var qualityFilter = 0.0
-          if (!quality.isEmpty) qualityFilter = quality.toDouble
+          val readQuality = params.getOrElse("quality", "0").toDouble
 
           val dataOption = VizReads.readsData.multiget(viewRegion, sampleIds)
           dataOption match {
             case Some(_) => {
               val data: RDD[(ReferenceRegion, AlignmentRecord)] = dataOption.get.toRDD
-              val filteredData = AlignmentRecordFilter.filterByRecord(data, qualityFilter)
+              val filteredData = AlignmentRecordFilter.filterByRecordQuality(data, readQuality)
               val alignmentData: Map[String, SampleTrack] = AlignmentRecordLayout(data, reference, region, sampleIds)
               val freqData: Map[String, List[FreqJson]] = FrequencyLayout(filteredData.map(_._2), region, sampleIds)
               val fileMap = VizReads.readsData.getFileMap()
