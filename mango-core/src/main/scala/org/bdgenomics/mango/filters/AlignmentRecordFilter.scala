@@ -23,14 +23,15 @@ import org.bdgenomics.formats.avro.{ AlignmentRecord }
 
 object AlignmentRecordFilter {
 
-  //Applies quality filter to alignment records, returns in JSON format
-  def filterByRegion(data: RDD[(ReferenceRegion, AlignmentRecord)], quality: Double): RDD[(ReferenceRegion, AlignmentRecord)] = {
+  //Applies quality filter to (reference region, alignment records), returns the RDD
+  def filterByRecord(data: RDD[(ReferenceRegion, AlignmentRecord)], quality: Double): RDD[(ReferenceRegion, AlignmentRecord)] = {
     if (quality <= 0.0) return data
     return data.filter(r => r._2.getMapq >= quality)
   }
 
-  //
-  def aggregate() = {
-
+  //Applies the quality filter to (alignment records)
+  def filterByRecordOnly(data: RDD[(AlignmentRecord)], quality: Double): RDD[(AlignmentRecord)] = {
+    if (quality <= 0.0) return data
+    return data.filter(r => r.getMapq >= quality)
   }
 }

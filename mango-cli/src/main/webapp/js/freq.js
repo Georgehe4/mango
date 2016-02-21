@@ -18,11 +18,13 @@ var bisectData = d3.bisector(function(d) {
   return d.base;
 }).left;
 
-function renderCoverage(refName, start, end) {
+function renderCoverage(refName, start, end, quality) {
+  quality = quality || 0
   viewRefName = refName;
   viewRegStart = start;
   viewRegEnd = end;
-  var covLocation = "/freq/" + viewRefName + "?start=" + viewRegStart + "&end=" + viewRegEnd + "&sample=" + sampleId;
+  var covLocation = "/freq/" + viewRefName + "?start=" + viewRegStart + "&end=" + viewRegEnd + "&sample=" + sampleId
+    + "&quality=" + quality;
 
   d3.json(covLocation, function(error, data) {
     for (var i = 0; i < samples.length; i++) {

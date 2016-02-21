@@ -222,7 +222,7 @@ class VizServlet extends ScalatraServlet {
       val sampleIds: List[String] = params("sample").split(",").toList
       val data: RDD[(ReferenceRegion, AlignmentRecord)] =
         VizReads.readsData.multiget(viewRegion, sampleIds).toRDD
-      val filteredData = AlignmentRecordFilter.filterByRegion(data, qualityFilter)
+      val filteredData = AlignmentRecordFilter.filterByRecord(data, qualityFilter)
       val reference = VizReads.getReference(region)
       val alignmentData = AlignmentRecordLayout(filteredData, reference, region, sampleIds)
       val fileMap = VizReads.readsData.getFileMap()

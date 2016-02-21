@@ -82,7 +82,7 @@ function render(refName, start, end, quality) {
   // Reads and Coverage
   if (readsExist) {
     renderReads(refName, start, end, quality);
-    renderCoverage(refName, start, end);
+    renderCoverage(refName, start, end, quality);
   }
 }
 
