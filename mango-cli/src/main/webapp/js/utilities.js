@@ -136,6 +136,6 @@ function checkForm(form) {
   var region = info.split(":")[1].split("-");
   var newStart = Math.max(0, region[0]);
   var newEnd = Math.max(newStart, region[1]);
-  var quality = info.split(":")[2];
+  var quality = form.elements["quality"].value;
   render(refName, newStart, newEnd, quality);
 }

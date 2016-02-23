@@ -26,11 +26,11 @@ object AlignmentRecordFilter {
   //Applies quality filter to (reference region, alignment records), returns the RDD
   def filterByRecordQuality(data: RDD[(ReferenceRegion, AlignmentRecord)], quality: Double): RDD[(ReferenceRegion, AlignmentRecord)] = {
     if (quality <= 0.0) return data
-    return data.filter(r => r._2.getMapq >= quality)
+    return data.filter(r => r._2.getMapq() >= quality)
   }
 
   //Applies the quality filter to (alignment records)
-  def filterByExon(): Unit ={
+  def filterByExon(): Unit = {
 
   }
 }
