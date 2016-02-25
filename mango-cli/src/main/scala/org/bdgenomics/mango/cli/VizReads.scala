@@ -235,7 +235,7 @@ class VizServlet extends ScalatraServlet {
           val region = new ReferenceRegion(params("ref").toString, params("start").toLong, end)
           val sampleIds: List[String] = params("sample").split(",").toList
           val reference = VizReads.getReference(region)
-          val readQuality = params.getOrElse("quality", "0").toDouble
+          val readQuality = params.getOrElse("quality", "0")
 
           val dataOption = VizReads.readsData.multiget(viewRegion, sampleIds)
           dataOption match {
