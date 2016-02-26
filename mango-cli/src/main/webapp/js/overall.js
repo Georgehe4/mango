@@ -61,7 +61,8 @@ function render(refName, start, end, mapQuality) {
   viewRegStart = start;
   viewRegEnd = end;
   viewRefName = refName;
-
+  if (start < 0) start = 0;
+  if (end < 0) end = 0;
   //Add Region Info
   var placeholder = viewRefName + ":"+ viewRegStart + "-" + viewRegEnd;
   $('#regInput').attr('placeholder', placeholder);

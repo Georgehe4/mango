@@ -108,7 +108,8 @@ function renderJsonVariants() {
             "Contig: " + d.contigName + "<br>" +
             "Alleles: " + d.alleles)
             .style("left", d3.mouse(this)[0] + "px")
-            .style("top", "-4px");
+            .style("top", "-4px")
+            .on("dblclick", featureZoom(d))
         })
         .on("mouseover", function(d) {
           varDiv.transition()
@@ -127,6 +128,13 @@ function renderJsonVariants() {
     var removed = variants.exit();
     removed.remove();
   });
+}
+
+function featureZoom(d) {
+  var start = d.start
+  var end = d.end
+  var distance = end - start
+  render(viewRefName, start - distance, end + distance);
 }
 
 function renderVariantFrequency() {

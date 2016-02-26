@@ -69,7 +69,6 @@ function renderReads(refName, start, end, quality) {
         + "&quality=" + quality;
     renderJsonReads(readsJsonLocation);
 
-
 }
 
 function renderJsonReads(readsJsonLocation) {
