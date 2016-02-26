@@ -109,7 +109,7 @@ function renderJsonVariants() {
             "Alleles: " + d.alleles)
             .style("left", d3.mouse(this)[0] + "px")
             .style("top", "-4px")
-            .on("dblclick", featureZoom(d))
+            .on("dblclick", variantZoom(d));
         })
         .on("mouseover", function(d) {
           varDiv.transition()
@@ -130,7 +130,7 @@ function renderJsonVariants() {
   });
 }
 
-function featureZoom(d) {
+function variantZoom(d) {
   var start = d.start
   var end = d.end
   var distance = end - start

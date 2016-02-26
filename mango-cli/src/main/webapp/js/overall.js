@@ -125,7 +125,9 @@ function renderFeatures(viewRefName, viewRegStart, viewRegEnd) {
             "Start: " + d.start + "<br>" +
             "End: " + d.end)
             .style("left", (d3.event.pageX - 200) + "px")
-            .style("top", (d3.event.pageY - 200) + "px");
+            .style("top", (d3.event.pageY - 200) + "px")
+            .on("dblclick", featureZoom(d))
+            ;
         })
         .on("mouseover", function(d) {
           featDiv.transition()
@@ -144,4 +146,10 @@ function renderFeatures(viewRefName, viewRegStart, viewRegEnd) {
       var removed = rects.exit();
       removed.remove();
     });
+}
+function featureZoom(d) {
+  var start = d.start
+  var end = d.end
+  var distance = end - start
+  render(viewRefName, start - distance, end + distance);
 }
