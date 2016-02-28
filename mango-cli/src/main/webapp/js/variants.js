@@ -112,28 +112,36 @@ function renderJsonVariants() {
             .duration(200)
             .style("opacity", .9);
           varDiv.html(
-            "Contig: " + d.contigName + "<br>" +
-            "Alleles: " + d.alleles)
+              "Contig: " + d.contigName + "<br>" +
+              "Alleles: " + d.alleles)
             .style("left", d3.mouse(this)[0] + "px")
-            .style("top", "-4px");
+            .style("top", "-4px")
+            .on("dblclick", variantZoom(d));
         })
-        .on("mouseover", function(d) {
-          varDiv.transition()
-            .duration(200)
-            .style("opacity", .9);
-          varDiv.html(d.alleles)
-            .style("left", d3.mouse(this)[0] +  "px")
-            .style("top", "-4px");
-        })
-        .on("mouseout", function(d) {
-          varDiv.transition()
+      .on("mouseover", function(d) {
+        varDiv.transition()
+          .duration(200)
+          .style("opacity", .9);
+        varDiv.html(d.alleles)
+          .style("left", d3.mouse(this)[0] +  "px")
+          .style("top", "-4px");
+      })
+      .on("mouseout", function(d) {
+        varDiv.transition()
           .duration(500)
           .style("opacity", 0);
-        });
+      });
 
     var removed = variants.exit();
     removed.remove();
   });
+}
+
+function variantZoom(d) {
+  var start = d.start
+  var end = d.end
+  var distance = end - start
+  render(viewRefName, start - distance, end + distance);
 }
 
 function renderVariantFrequency() {

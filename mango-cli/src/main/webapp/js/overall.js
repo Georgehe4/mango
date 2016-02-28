@@ -119,28 +119,36 @@ function renderFeatures(viewRefName, viewRegStart, viewRegEnd) {
             .duration(200)
             .style("opacity", .9);
           featDiv.html(
-            "Feature Id: " + d.featureId + "<br>" +
-            "Feature Type: " + d.featureType + "<br>" +
-            "Start: " + d.start + "<br>" +
-            "End: " + d.end)
+              "Feature Id: " + d.featureId + "<br>" +
+              "Feature Type: " + d.featureType + "<br>" +
+              "Start: " + d.start + "<br>" +
+              "End: " + d.end)
             .style("left", (d3.event.pageX - 200) + "px")
-            .style("top", (d3.event.pageY - 200) + "px");
+            .style("top", (d3.event.pageY - 200) + "px")
+            .on("dblclick", featureZoom(d))
+          ;
         })
-        .on("mouseover", function(d) {
-          featDiv.transition()
+      .on("mouseover", function(d) {
+        featDiv.transition()
           .duration(200)
           .style("opacity", .9);
-          featDiv.html(d.featureId)
+        featDiv.html(d.featureId)
           .style("left", (d3.event.pageX) + "px")
           .style("top", (d3.event.pageY - 28) + "px");
-        })
-        .on("mouseout", function(d) {
-          featDiv.transition()
+      })
+      .on("mouseout", function(d) {
+        featDiv.transition()
           .duration(500)
           .style("opacity", 0);
-        });
+      });
 
-      var removed = rects.exit();
-      removed.remove();
-    });
+    var removed = rects.exit();
+    removed.remove();
+  });
+}
+function featureZoom(d) {
+  var start = d.start
+  var end = d.end
+  var distance = end - start
+  render(viewRefName, start - distance, end + distance);
 }
