@@ -207,6 +207,9 @@ class VizReadsArgs extends Args4jBase with ParquetArgs {
 
   @Args4jOption(required = false, name = "-port", usage = "The port to bind to for visualization. The default is 8080.")
   var port: Int = 8080
+
+  @Args4jOption(required = false, name = "-read_threshold", usage = "The threshold to begin removing variant reads at. The default is 40,000.")
+  var threshold: Int = 40000
 }
 
 class VizServlet extends ScalatraServlet {
@@ -228,12 +231,12 @@ class VizServlet extends ScalatraServlet {
   get("/reads/:ref") {
     VizTimers.AlignmentRequest.time {
       val end = VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref").toString))
-      val viewRegion = ReferenceRegion(params("ref"), params("start").toLong, end)
+      val start = params("start").toLong
+      val viewRegion = ReferenceRegion(params("ref"), start, end)
       contentType = "json"
       val dictOpt = VizReads.globalDict(viewRegion.referenceName)
       dictOpt match {
         case Some(_) => {
-          val end: Long = VizUtils.getEnd(viewRegion.end, VizReads.globalDict(viewRegion.referenceName))
           val sampleIds: List[String] = params("sample").split(",").toList
           val readQuality = params.getOrElse("quality", "0")
           val dataOption = VizReads.readsData.multiget(viewRegion, sampleIds)
@@ -271,13 +274,13 @@ class VizServlet extends ScalatraServlet {
 
   get("/mergedReads/:ref") {
     VizTimers.AlignmentRequest.time {
-      val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
-        VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref").toString)))
+      val end = VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref").toString))
+      val start = params("start").toLong
+      val viewRegion = ReferenceRegion(params("ref"), start, end)
       contentType = "json"
       val dictOpt = VizReads.globalDict(viewRegion.referenceName)
       dictOpt match {
         case Some(_) => {
-          val end: Long = VizUtils.getEnd(viewRegion.end, VizReads.globalDict(viewRegion.referenceName))
           val region = new ReferenceRegion(params("ref").toString, params("start").toLong, end)
           val sampleIds: List[String] = params("sample").split(",").toList
           val readQuality = params.getOrElse("quality", "0")
