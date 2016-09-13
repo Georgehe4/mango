@@ -63,12 +63,10 @@ class AlignmentRecordMaterialization(s: SparkContext,
    */
   def getReferenceRegion = (ar: AlignmentRecord) => ReferenceRegion(ar)
 
-  /*
+  /**
    * Gets Frequency over a given region for each specified sample
    *
    * @param region: ReferenceRegion to query over
-   * @param sampleIds: List[String] all samples to fetch frequency
-   * @param sampleSize: number of frequency values to return
    *
    * @return Map[String, Iterable[FreqJson]] Map of [SampleId, Iterable[FreqJson]] which stores each base and its
    * cooresponding frequency.
@@ -88,7 +86,7 @@ class AlignmentRecordMaterialization(s: SparkContext,
   }
 
   /**
-   * Formats raw data from KLayeredTile to JSON. This is requied by KTiles
+   * Formats raw data from KLayeredTile to JSON. This is required by KTiles
    * @param data RDD of (id, AlignmentRecord) tuples
    * @return JSONified data
    */
