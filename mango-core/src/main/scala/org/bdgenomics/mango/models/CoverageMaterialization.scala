@@ -71,7 +71,7 @@ class CoverageMaterialization(s: SparkContext,
       .collect
       .groupBy(_._1)
       .map(r => (r._1, r._2.map(_._2)))
-      .mapValues(r => r.map(f => PositionCount(f.start, f.count.toInt)))
+      .mapValues(r => r.map(f => PositionCount(f.start, f.count.toInt))(collection.breakOut))
     flattened.mapValues(r => write(r))
   }
 }
@@ -104,7 +104,8 @@ object CoverageRecordMaterialization {
    * @return RDD of data from the file over specified ReferenceRegion
    */
   def loadAdam(sc: SparkContext, region: ReferenceRegion, fp: String): CoverageRDD = {
-    val predicate = ((LongColumn("end") >= region.start) && (LongColumn("start") <= region.end) && (BinaryColumn("contigName") === region.referenceName))
+    val predicate = ((LongColumn("end") <= region.end) && (LongColumn("start") >= region.start) && (BinaryColumn("contigName") === region.referenceName))
+    //sc.loadCoverage(fp)
     sc.loadParquetCoverage(fp, Some(predicate))
   }
 }

@@ -21,17 +21,25 @@ package org.bdgenomics.mango.models
 import net.liftweb.json._
 import org.bdgenomics.adam.models.{ ReferenceRegion, SequenceDictionary, SequenceRecord }
 import org.bdgenomics.mango.util.MangoFunSuite
+import org.bdgenomics.adam.rdd.ADAMContext._
 
 class CoverageMaterializationSuite extends MangoFunSuite {
 
   implicit val formats = DefaultFormats
 
-  val coverageFileName = "mouse_chrM.coverage.adam"
+  val coverageFileName = "mouse_chrM.coverage.a.adam"
   val coverageFile = resourcePath(coverageFileName)
   val key = LazyMaterialization.filterKeyFromFile(coverageFileName)
 
   val dict = new SequenceDictionary(Vector(SequenceRecord("chrM", 16699L)))
 
+  sparkTest("test") {
+    val rdd = sc.loadCoverage(coverageFile)
+    println(rdd.rdd.count)
+    /*val rdd2 = sc.loadParquetCoverage(coverageFileName)
+    println(rdd2.rdd.count)*/
+  }
+  /*
   sparkTest("assert raw data returns from one block") {
 
     val data = new CoverageMaterialization(sc, List(coverageFile), dict)
@@ -40,14 +48,5 @@ class CoverageMaterializationSuite extends MangoFunSuite {
 
     val json = data.getJson(region)
     assert(json.contains(key))
-  }
-  /*
-  sparkTest("can fetch multiple files") {
-    val data = new FeatureMaterialization(sc, List(bedFile, bedFile2), dict)
-    val region = new ReferenceRegion("chrM", 1000L, 1200L)
-    val json = data.getJson(region)
-
-    assert(json.contains(key) && json.contains(key2))
   }*/
-
 }
