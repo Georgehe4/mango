@@ -27,7 +27,7 @@ class CoverageMaterializationSuite extends MangoFunSuite {
 
   implicit val formats = DefaultFormats
 
-  val coverageFileName = "mouse_chrM.coverage.a.adam"
+  val coverageFileName = "mouse.bed"
   val coverageFile = resourcePath(coverageFileName)
   val key = LazyMaterialization.filterKeyFromFile(coverageFileName)
 
@@ -36,17 +36,6 @@ class CoverageMaterializationSuite extends MangoFunSuite {
   sparkTest("test") {
     val rdd = sc.loadCoverage(coverageFile)
     println(rdd.rdd.count)
-    /*val rdd2 = sc.loadParquetCoverage(coverageFileName)
-    println(rdd2.rdd.count)*/
+    // TODO: Complete coverage tests once issues with loadParquetAlignments are resolved
   }
-  /*
-  sparkTest("assert raw data returns from one block") {
-
-    val data = new CoverageMaterialization(sc, List(coverageFile), dict)
-
-    val region = new ReferenceRegion("chrM", 0L, 1200L)
-
-    val json = data.getJson(region)
-    assert(json.contains(key))
-  }*/
 }

@@ -60,6 +60,18 @@ class CoverageMaterialization(s: SparkContext,
    */
   def getReferenceRegion = (ar: Coverage) => ReferenceRegion(ar)
 
+  def getCoverage(region: ReferenceRegion): Map[String, String] = {
+    val covCounts: RDD[(String, PositionCount)] =
+      get(region)
+        .flatMap(r => {
+          val positions = r._2.start until r._2.end
+          positions.map(n => (((ReferenceRegion(r._2.contigName, n, n + 1), r._1), r._2.count)))
+            .filter(_._1._1.overlaps(region))
+        }).reduceByKey(_ + _)
+        .map(r => (r._1._2, PositionCount(r._1._1.start, r._2.toInt)))
+    covCounts.collect.groupBy(_._1) // group by sample Id
+      .map(r => (r._1, write(r._2.map(_._2))))
+  }
   /**
    * Formats raw data from KLayeredTile to JSON. This is required by KTiles
    *
