@@ -353,7 +353,7 @@ class VizServlet extends ScalatraServlet {
           if (viewRegion != VizReads.readsCoverageRegion) {
             VizReads.readsCoverageWait = true
             if (VizReads.coverageData.isEmpty) {
-              VizReads.readsCoverageCache = VizReads.readsData.get.getCoverage(viewRegion)
+              //VizReads.readsCoverageCache = VizReads.readsData.get.getCoverage(viewRegion)
             } else {
               VizReads.readsCoverageCache = VizReads.coverageData.get.getCoverage(viewRegion)
             }
