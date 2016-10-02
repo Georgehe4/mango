@@ -138,13 +138,8 @@ abstract class LazyMaterialization[T: ClassTag] extends Serializable with Loggin
       // get alignment data for all samples
       files.map(fp => {
         val k = LazyMaterialization.filterKeyFromFile(fp)
-        val d_1 = load(region, fp)
-        d_1.cache
-        d_1.count
-        val d_2 = d_1.map(v => (k, v))
-        d_2.cache
-        d_2.count
-        data = data.union(d_2)
+        val d = load(region, fp).map(v => (k, v))
+        data = data.union(d)
       })
       // insert into IntervalRDD
       if (intRDD == null) {
