@@ -139,10 +139,12 @@ abstract class LazyMaterialization[T: ClassTag] extends Serializable with Loggin
       files.map(fp => {
         val k = LazyMaterialization.filterKeyFromFile(fp)
         val d = load(region, fp).map(v => (k, v))
+        d.cache
+        d.count
         data = data.union(d)
+        data.cache
+        data.count
       })
-      data.cache()
-      data.count
       // insert into IntervalRDD
       if (intRDD == null) {
         intRDD = IntervalRDD(data.keyBy(r => getReferenceRegion(r._2)))
