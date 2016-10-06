@@ -20,7 +20,7 @@ package org.bdgenomics.mango.cli
 import java.io.FileNotFoundException
 import net.liftweb.json.Serialization.write
 import net.liftweb.json._
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{ Timer, RDD }
 import org.apache.spark.SparkContext
 import org.bdgenomics.adam.models.{ ReferenceRegion, SequenceDictionary }
 import org.bdgenomics.formats.avro.{ Feature, Genotype }
@@ -55,6 +55,21 @@ object VizTimers extends Metrics {
   val MakingTrack = timer("Making Track")
   val DoingCollect = timer("Doing Collect")
   val PrintReferenceTimer = timer("JSON get reference string")
+  var globalCounter: Int = 1
+
+  def incrementCounter(): Int = {
+    var counter: Int = globalCounter
+    this.synchronized {
+      counter = globalCounter
+      globalCounter += 1
+    }
+    return counter
+  }
+
+  def createTimer(name: String): Timer = {
+    val newName = name + incrementCounter().toString()
+    return timer(newName)
+  }
 }
 
 object VizReads extends BDGCommandCompanion with Logging {
@@ -305,163 +320,161 @@ class VizServlet extends ScalatraServlet {
   }
 
   get("/reads/:key/:ref") {
-    VizTimers.ReadsRequest.time {
+    //VizTimers.createTimer("GET reads").time {
+    if (!VizReads.readsExist) {
+      VizReads.errors.notFound
+    } else {
+      val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
+        VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
+      val key: String = params("key")
+      contentType = "json"
 
-      if (!VizReads.readsExist) {
-        VizReads.errors.notFound
-      } else {
-        val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
-          VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
-        val key: String = params("key")
-        contentType = "json"
+      val dictOpt = VizReads.globalDict(viewRegion.referenceName)
+      if (dictOpt.isDefined) {
+        while (VizReads.readsWait) Thread sleep (20)
+        // region was already collected, grab from cache
+        if (viewRegion != VizReads.readsRegion) {
+          VizReads.readsWait = true
+          VizReads.readsCache = VizReads.readsData.get.getJson(viewRegion)
+          VizReads.readsRegion = viewRegion
+          VizReads.readsWait = false
+        }
+        val results = VizReads.readsCache.get(key)
 
-        val dictOpt = VizReads.globalDict(viewRegion.referenceName)
-        if (dictOpt.isDefined) {
-          while (VizReads.readsWait) Thread sleep (20)
-          // region was already collected, grab from cache
-          if (viewRegion != VizReads.readsRegion) {
-            VizReads.readsWait = true
-            VizReads.readsCache = VizReads.readsData.get.getJson(viewRegion)
-            VizReads.readsRegion = viewRegion
-            VizReads.readsWait = false
-          }
-          val results = VizReads.readsCache.get(key)
-
-          if (results.isDefined) {
-            Ok(results.get)
-          } else VizReads.errors.notFound
-        } else VizReads.errors.outOfBounds
-      }
+        if (results.isDefined) {
+          Ok(results.get)
+        } else VizReads.errors.notFound
+      } else VizReads.errors.outOfBounds
+      //}
     }
   }
 
   get("/reads/coverage/:key/:ref") {
-    VizTimers.ReadsRequest.time {
+    //VizTimers.createTimer("GET coverage").time {
+    if (!VizReads.readsExist) {
+      VizReads.errors.notFound
+    } else {
+      val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
+        VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
+      val key: String = params("key")
+      contentType = "json"
 
-      if (!VizReads.readsExist) {
-        VizReads.errors.notFound
-      } else {
-        val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
-          VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
-        val key: String = params("key")
-        contentType = "json"
-
-        val dictOpt = VizReads.globalDict(viewRegion.referenceName)
-        if (dictOpt.isDefined) {
-          while (VizReads.readsCoverageWait) Thread sleep (20)
-          // region was already collected, grab from cache
-          if (viewRegion != VizReads.readsCoverageRegion) {
-            VizReads.readsCoverageWait = true
-            if (VizReads.coverageData.isEmpty) {
-              VizReads.readsCoverageCache = VizReads.readsData.get.getCoverage(viewRegion)
-            } else {
-              VizReads.readsCoverageCache = VizReads.coverageData.get.getCoverage(viewRegion)
-            }
-            VizReads.readsCoverageRegion = viewRegion
-            VizReads.readsCoverageWait = false
+      val dictOpt = VizReads.globalDict(viewRegion.referenceName)
+      if (dictOpt.isDefined) {
+        while (VizReads.readsCoverageWait) Thread sleep (20)
+        // region was already collected, grab from cache
+        if (viewRegion != VizReads.readsCoverageRegion) {
+          VizReads.readsCoverageWait = true
+          if (VizReads.coverageData.isEmpty) {
+            VizReads.readsCoverageCache = VizReads.readsData.get.getCoverage(viewRegion)
+          } else {
+            VizReads.readsCoverageCache = VizReads.coverageData.get.getCoverage(viewRegion)
           }
-          val results = VizReads.readsCoverageCache.get(key)
+          VizReads.readsCoverageRegion = viewRegion
+          VizReads.readsCoverageWait = false
+        }
+        val results = VizReads.readsCoverageCache.get(key)
 
-          if (results.isDefined) {
-            Ok(results.get)
-          } else VizReads.errors.notFound
-        } else VizReads.errors.outOfBounds
-      }
+        if (results.isDefined) {
+          Ok(results.get)
+        } else VizReads.errors.notFound
+      } else VizReads.errors.outOfBounds
     }
+    //}
   }
 
   get("/genotypes/:key/:ref") {
-    VizTimers.VarRequest.time {
-      if (!VizReads.variantsExist)
-        VizReads.errors.notFound
-      else {
-        val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
-          VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
-        val key: String = params("key")
-        contentType = "json"
+    //VizTimers.createTimer("Get genotypes").time {
+    if (!VizReads.variantsExist)
+      VizReads.errors.notFound
+    else {
+      val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
+        VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
+      val key: String = params("key")
+      contentType = "json"
 
-        // if region is in bounds of reference, return data
-        val dictOpt = VizReads.globalDict(viewRegion.referenceName)
-        if (dictOpt.isDefined) {
-          while (VizReads.variantsWait) Thread sleep (20)
-          // region was already collected, grab from cache
-          if (viewRegion != VizReads.variantsRegion) {
-            VizReads.variantsWait = true
-            VizReads.variantsCache = VizReads.variantData.get.getJson(viewRegion)
-            VizReads.variantsRegion = viewRegion
-            VizReads.variantsWait = false
-          }
-          val results = VizReads.variantsCache.get(key)
-          if (results.isDefined) {
-            // extract genotypes only and parse to strinified json
-            Ok(write(parse(results.get).extract[VariantAndGenotypes].genotypes))
-          } else ({}) // No data for this key
-        } else VizReads.errors.outOfBounds
-      }
+      // if region is in bounds of reference, return data
+      val dictOpt = VizReads.globalDict(viewRegion.referenceName)
+      if (dictOpt.isDefined) {
+        while (VizReads.variantsWait) Thread sleep (20)
+        // region was already collected, grab from cache
+        if (viewRegion != VizReads.variantsRegion) {
+          VizReads.variantsWait = true
+          VizReads.variantsCache = VizReads.variantData.get.getJson(viewRegion)
+          VizReads.variantsRegion = viewRegion
+          VizReads.variantsWait = false
+        }
+        val results = VizReads.variantsCache.get(key)
+        if (results.isDefined) {
+          // extract genotypes only and parse to strinified json
+          Ok(write(parse(results.get).extract[VariantAndGenotypes].genotypes))
+        } else ({}) // No data for this key
+      } else VizReads.errors.outOfBounds
     }
+    //}
   }
 
   get("/variants/:key/:ref") {
-    VizTimers.VarRequest.time {
-      if (!VizReads.variantsExist)
-        VizReads.errors.notFound
-      else {
-        val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
-          VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
-        val key: String = params("key")
-        contentType = "json"
+    //VizTimers.createTimer("Get variants").time {
+    if (!VizReads.variantsExist)
+      VizReads.errors.notFound
+    else {
+      val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
+        VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
+      val key: String = params("key")
+      contentType = "json"
 
-        // if region is in bounds of reference, return data
-        val dictOpt = VizReads.globalDict(viewRegion.referenceName)
-        if (dictOpt.isDefined) {
-          while (VizReads.variantsWait) Thread sleep (20)
-          // region was already collected, grab from cache
-          if (viewRegion != VizReads.variantsRegion) {
-            VizReads.variantsWait = true
-            VizReads.variantsCache = VizReads.variantData.get.getJson(viewRegion)
-            VizReads.variantsRegion = viewRegion
-            VizReads.variantsWait = false
-          }
-          val results = VizReads.variantsCache.get(key)
-          if (results.isDefined) {
-            // extract variants only and parse to strinified json
-            Ok(write(parse(results.get).extract[VariantAndGenotypes].variants))
-          } else Ok({}) // No data for this key
-        } else VizReads.errors.outOfBounds
-      }
+      // if region is in bounds of reference, return data
+      val dictOpt = VizReads.globalDict(viewRegion.referenceName)
+      if (dictOpt.isDefined) {
+        while (VizReads.variantsWait) Thread sleep (20)
+        // region was already collected, grab from cache
+        if (viewRegion != VizReads.variantsRegion) {
+          VizReads.variantsWait = true
+          VizReads.variantsCache = VizReads.variantData.get.getJson(viewRegion)
+          VizReads.variantsRegion = viewRegion
+          VizReads.variantsWait = false
+        }
+        val results = VizReads.variantsCache.get(key)
+        if (results.isDefined) {
+          // extract variants only and parse to strinified json
+          Ok(write(parse(results.get).extract[VariantAndGenotypes].variants))
+        } else Ok({}) // No data for this key
+      } else VizReads.errors.outOfBounds
     }
+    //}
   }
 
   get("/features/:key/:ref") {
-    VizTimers.FeatRequest.time {
-      if (!VizReads.featuresExist)
-        VizReads.errors.notFound
-      else {
-        val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
-          VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
-        val key: String = params("key")
-        contentType = "json"
+    //VizTimers.createTimer("Get features").time {
+    if (!VizReads.featuresExist)
+      VizReads.errors.notFound
+    else {
+      val viewRegion = ReferenceRegion(params("ref"), params("start").toLong,
+        VizUtils.getEnd(params("end").toLong, VizReads.globalDict(params("ref"))))
+      val key: String = params("key")
+      contentType = "json"
 
-        // if region is in bounds of reference, return data
-        val dictOpt = VizReads.globalDict(viewRegion.referenceName)
-        if (dictOpt.isDefined) {
-          while (VizReads.featuresWait) Thread sleep (20)
-          // region was already collected, grab from cache
-          if (viewRegion != VizReads.featuresRegion) {
-            VizReads.featuresWait = true
-            VizReads.featuresCache = VizReads.featureData.get.getJson(viewRegion)
-            VizReads.featuresRegion = viewRegion
-            VizReads.featuresWait = false
-          }
-          val results = VizReads.featuresCache.get(key)
+      // if region is in bounds of reference, return data
+      val dictOpt = VizReads.globalDict(viewRegion.referenceName)
+      if (dictOpt.isDefined) {
+        while (VizReads.featuresWait) Thread sleep (20)
+        // region was already collected, grab from cache
+        if (viewRegion != VizReads.featuresRegion) {
+          VizReads.featuresWait = true
+          VizReads.featuresCache = VizReads.featureData.get.getJson(viewRegion)
+          VizReads.featuresRegion = viewRegion
+          VizReads.featuresWait = false
+        }
+        val results = VizReads.featuresCache.get(key)
 
-          if (results.isDefined) {
-            Ok(results.get)
-          } else Ok({}) // No data for this key
-        } else VizReads.errors.outOfBounds
-      }
+        if (results.isDefined) {
+          Ok(results.get)
+        } else Ok({}) // No data for this key
+      } else VizReads.errors.outOfBounds
     }
   }
+  //}
 }
 
 class VizReads(protected val args: VizReadsArgs) extends BDGSparkCommand[VizReadsArgs] with Logging {
@@ -590,6 +603,7 @@ class VizReads(protected val args: VizReadsArgs) extends BDGSparkCommand[VizRead
 
     /**
      * Runs total data scan over all feature and variant files satisfying a certain predicate.
+     *
      * @param variantFilter predicate to be satisfied during variant scan
      * @param featureFilter predicate to be satisfied during feature scan
      * @return Returns list of regions in the genome satisfying predicates
@@ -631,6 +645,7 @@ class VizReads(protected val args: VizReadsArgs) extends BDGSparkCommand[VizRead
 
     /**
      * preprocesses data by loading specified regions into memory for reads, variants and features
+     *
      * @param regions Regions to be preprocessed
      */
     def preprocess(regions: List[ReferenceRegion]) = {
