@@ -20,6 +20,8 @@ import sys
 from mango.QC import QC
 from mango.test import SparkTestCase
 from collections import Counter
+from bdgenomics.mango.QC import QC
+from bdgenomics.mango.test import SparkTestCase
 
 from bdgenomics.adam.adamContext import ADAMContext
 from bdgenomics.adam.rdd import CoverageRDD
